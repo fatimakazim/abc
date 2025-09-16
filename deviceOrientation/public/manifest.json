@@ -2,7 +2,7 @@
   "name": "中国节日词汇书 - Chinese Festival Vocabulary",
   "short_name": "Chinese Vocab",
   "description": "Interactive Chinese festival vocabulary learning app",
-  "start_url": "/",
+  "start_url": "/abc/deviceOrientation/public/index.html",
   "display": "standalone",
   "background_color": "#8B0000",
   "theme_color": "#DC143C",
