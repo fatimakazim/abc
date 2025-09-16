@@ -2,9 +2,9 @@ let page = 0;
 let tiltEnabled = false;
 let lastTiltTime = 0;
 const tiltCooldown = 1000; // 1 second cooldown between page turns
-const totalPages = 6; // Adjust based on your total pages
+const totalPages = 6; 
 
-// Show current page
+//  current page
 function show() {
   document.querySelectorAll('.page').forEach((p, i) => {
     p.style.display = i === page ? 'block' : 'none';
@@ -44,7 +44,7 @@ async function enableTilt() {
     window.addEventListener("deviceorientation", tilt, true);
     tiltEnabled = true;
     
-    // Update button text
+    // Updates button text
     const button = document.querySelector('button');
     if (button) {
       button.textContent = "✅ Tilt Enabled";
@@ -57,14 +57,14 @@ async function enableTilt() {
   }
 }
 
-// Handle device orientation
+// Handling device orientation
 function tilt(event) {
   if (!tiltEnabled) return;
   
   const gamma = event.gamma; // Left-right tilt (-90 to 90)
   const now = Date.now();
   
-  // Optional: Update debug info if you have debug elements
+  // Updating debug info if you have debug elements
   const gammaDebug = document.getElementById('gamma');
   const tiltDebug = document.getElementById('tilt');
   if (gammaDebug) gammaDebug.textContent = `gamma: ${Math.round(gamma)}`;
