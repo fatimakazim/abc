@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="theme-color" content="#000000">
+  <meta http-equiv="ScreenOrientation" content="Normal">
+  <link rel="manifest" href="manifest.json" />
+
+  <title>Simple Chat</title>
+
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+
+
+  <!-- <script src="lib/p5.js"></script> -->
+  <!-- <script src="lib/p5.sound.js"></script> -->
+  
+  <!-- IMPORTANT: include socket.io library - this was missing! -->
+  <script src="/socket.io/socket.io.js"></script>  
+
+</head>
+
+
+<body>
+<div class="hint-box">
+    Try typing: <strong>alex, max, rob, pretty, ugly, hate, cool, love, loser</strong>
+</div>
+
+  <div class="main-wrapper">
+    
+    <div id="nameWrapper">
+        <input type="text" placeholder="Your Name"><p> ⬆️ your name!</p>
+    </div>
+
+    
+    <div id="threadWrapper">
+    <ul>
+        <li><span class="who">Aisha:</span><span class="words">Hey everyone! How's it going? 😄</span></li>
+        <li><span class="who">Omar:</span><span class="words">Pretty good! Just finished an awesome project! 😌🤏🏽</span></li>
+        <li><span class="who">Fati:</span><span class="words">That's amazing, Omar! I love seeing your work 😍</span></li>
+
+        <li><span class="who">Sara:</span><span class="words">Guys, I saw 🧑‍💻 today. He was with 😎 and 🤖</span></li>
+        <li><span class="who">Aisha:</span><span class="words">No way! I thought 😎 and 🧑‍💻 aren't friends anymore 😲</span></li>
+        <li><span class="who">Omar:</span><span class="words">I think 🤖 helped them get over their differences 😌</span></li>
+
+        <li><span class="who">Sara:</span><span class="words">Lol, guys, don't spam the chat 😅</span></li>
+    </ul>
+</div>
+
+    <div>
+        <form id="chatForm">
+            <input id="newMessage" placeholder="Type something" autocomplete="off" />
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+
+  </div>
+
+
+
+  <!-- the script tag below should always be at the bottom, right before the closing body tag -->
+  <script src="script.js"></script>
+</body>
+
+</html>
