@@ -3,18 +3,17 @@
 <head>
   <title>GuessMoji</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="/fatima/port-4220/manifest.json">
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Game">
-  <link rel="apple-touch-icon" href="/fatima/port-4220/icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="theme-color" content="#b39b4f">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <base href="/fatima/port-4220/">
 </head>
 <body>
 
-  
   <div id="rulesScreen">
     <h1>GuessMoji 🤫🧐😏</h1>
     <div class="rules-box">
@@ -28,7 +27,6 @@
         <li>There will be 3 rounds after which you will vote who the Imposter is</li>
         <li>Detectives win if they eliminate the Imposter</li>
         <li>Imposter wins if they survive all rounds</li>
-    
       </ul>
     </div>
     
@@ -40,7 +38,6 @@
     <p>Players ready: <span id="readyCount">0</span>/<span id="totalCount">0</span></p>
   </div>
 
-  
   <div id="waiting" style="display: none;">
     <h1>GuessMoji</h1>
     <p>Players: <span id="count">0</span></p>
@@ -48,7 +45,6 @@
     <button id="startBtn" style="display: none;">Start Game</button>
   </div>
 
- 
   <div id="gameArea" style="display: none;">
     <h1>Round <span id="roundNumber">1</span></h1>
     <h2>Your Role: <span id="role"></span></h2>
@@ -68,22 +64,19 @@
     <ul id="submissionsList"></ul>
   </div>
 
-  
-
-  
   <div id="votingScreen" style="display: none;">
     <h2>Vote for the Imposter</h2>
     <p>Select a player to vote out:</p>
     <div id="playerVoteList"></div>
   </div>
 
- 
   <div id="resultScreen" style="display: none;">
     <h2 id="resultMessage"></h2>
     <button id="playAgainBtn">Play Again</button>
   </div>
 
-<script src="/fatima/port-4220/socket.io/socket.io.js"></script>
+  <!-- Use CDN for Socket.io -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

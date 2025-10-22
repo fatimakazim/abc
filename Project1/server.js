@@ -13,10 +13,14 @@ const server = https.createServer(options, app);
 const { Server } = require("socket.io");
 
 const io = new Server(server, {
-  path: '/fatima/port-4220/Project1/socket.io'
+  path: '/fatima/port-4220/socket.io',
+  cors: {
+    origin: "https://browsercircus.live",
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  transports: ['websocket', 'polling']
 });
-
-
 
 let players = {};
 let gameWords = ['Elon Musk', 'New York', 'Marathon', 'Shadow', 'Youtube'];
@@ -31,10 +35,8 @@ let timeLeft = 40;
 let currentRound = 1;
 let countdownInterval = null;
 
-
 let voteCount = {};  
 let totalVotes = 0;  
-
 
 io.on('connection', (socket) => {
   console.log('Player connected:', socket.id);
@@ -122,7 +124,6 @@ io.on('connection', (socket) => {
     
     if (currentPlayerIndex >= playerOrder.length) {
       if (currentRound === 3) {
-        
         voteCount = {};
         totalVotes = 0;
         io.emit('must-vote');
@@ -144,28 +145,19 @@ io.on('connection', (socket) => {
     }
   });
 
-  
   socket.on('vote-player', (votedSocketId) => {
-    
-    // 1. Check if the player is there
     if (!voteCount[votedSocketId]) {
       voteCount[votedSocketId] = 0;
     }
     
-    // 2. Add one vote
     voteCount[votedSocketId]++;
-    
-    // 3. Increment total
     totalVotes++;
     
     console.log(`${players[socket.id].name} voted for ${players[votedSocketId].name}`);
     console.log(`${players[votedSocketId].name} now has ${voteCount[votedSocketId]} votes`);
     console.log(`Progress: ${totalVotes}/${playerOrder.length} players voted`);
     
-    // 4. Check if everyone voted
     if (totalVotes === playerOrder.length) {
-      
-      // 5. Finding player with most votes 
       let maxVotes = 0;
       let eliminatedId = null;
       
@@ -176,12 +168,10 @@ io.on('connection', (socket) => {
         }
       }
       
-      // 6. Determine winner
       let eliminatedName = players[eliminatedId].name;
       let eliminatedRole = players[eliminatedId].role;
       let detectivesWin = (eliminatedRole === 'Imposter');
       
-      // 7. Send results
       io.emit('game-over', {
         votedName: eliminatedName,
         wasImposter: detectivesWin,
@@ -189,7 +179,6 @@ io.on('connection', (socket) => {
         voteCount: maxVotes
       });
       
-      // 8. Reset game
       gameStarted = false;
       currentRound = 1;
       voteCount = {};
