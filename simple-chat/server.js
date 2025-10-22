@@ -2,20 +2,20 @@ const express = require('express');
 const https = require("https");
 const fs = require("fs");
 
-const app = express();
-const portHTTPS = 4220;
 
+const app = express();
 app.use(express.static('public'));
 
+
+
+
 const options = {
-    key: fs.readFileSync("localhost-key.pem"),
-    cert: fs.readFileSync("localhost.pem"),
+ key: fs.readFileSync("keys-for-local-https/localhost-key.pem"),
+ cert: fs.readFileSync("keys-for-local-https/localhost.pem"),
 };
-
-let HTTPSserver = https.createServer(options, app);
-
+const server = https.createServer(options, app);
 const { Server } = require("socket.io");
-const io = new Server(HTTPSserver);
+const io = new Server(server);
 
 io.on('connection', (socket) => {
     console.log('A user connected', socket.id);
