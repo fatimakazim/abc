@@ -1,6 +1,7 @@
-const prefix = '/Project1';
-const socket = io({ path: prefix + '/socket.io' });
-
+const prefix = '/fatima/port-4220/Project1';
+const socket = io({ 
+  path: prefix + '/socket.io'
+});
 
 let mySocketId = '';
 let allPlayers = {};

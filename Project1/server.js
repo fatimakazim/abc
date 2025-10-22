@@ -13,7 +13,7 @@ const server = https.createServer(options, app);
 const { Server } = require("socket.io");
 
 const io = new Server(server, {
-  path: '/Project1/socket.io'
+  path: '/fatima/port-4220/Project1/socket.io'
 });
 
 
