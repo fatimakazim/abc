@@ -11,7 +11,11 @@ const options = {
 };
 const server = https.createServer(options, app);
 const { Server } = require("socket.io");
-const io = new Server(server);
+
+const io = new Server(server, {
+  path: '/Project1/socket.io'
+});
+
 
 
 let players = {};
