@@ -1,21 +1,18 @@
-// Connect to the Hong Kong server through the proxy
-const socket = io('https://browsercircus.live', { 
-  path: '/fatima/port-4220/socket.io',
-  transports: ['websocket', 'polling']
-});
+const socket = io();  
+//const prefix = location.pathname.replace(/\/$/, '');  //    
+//const socket = io({ path: prefix + '/socket.io' });//
 
 let mySocketId = '';
 let allPlayers = {};
 let hasVoted = false; 
 
+
 socket.on('connect', () => {
-  console.log('Connected to server!');
+  console.log('Connected!');
   mySocketId = socket.id;
 });
 
-socket.on('connect_error', (error) => {
-  console.error('Connection error:', error);
-});
+
 
 document.getElementById('readyBtn').onclick = () => {
   let name = document.getElementById('nameInput').value.trim();
@@ -52,6 +49,8 @@ document.getElementById('submitBtn').onclick = () => {
 document.getElementById('playAgainBtn').onclick = () => {
   location.reload();
 };
+
+
 
 socket.on('player-count', (count) => {
   document.getElementById('count').textContent = count;
@@ -116,6 +115,7 @@ socket.on('new-word', (data) => {
   list.appendChild(item);
 });
 
+
 socket.on('must-vote', () => {
   hasVoted = false;
   document.getElementById('gameArea').style.display = 'none';
@@ -124,10 +124,12 @@ socket.on('must-vote', () => {
   createVoteButtons();
 });
 
+
 function createVoteButtons() {
   let voteList = document.getElementById('playerVoteList');
   voteList.innerHTML = '';
   
+
   let instruction = document.createElement('p');
   instruction.textContent = 'Everyone must vote. Waiting for all votes...';
   instruction.id = 'voteInstruction';
@@ -145,7 +147,9 @@ function createVoteButtons() {
         return;
       }
       
+    
       hasVoted = true;
+      
       
       let allButtons = document.querySelectorAll('.vote-button');
       allButtons.forEach(btn => {
@@ -153,11 +157,14 @@ function createVoteButtons() {
         btn.style.opacity = '0.5';
       });
       
+     
       button.style.backgroundColor = '#4CAF50';
       button.style.opacity = '1';
       
+     
       document.getElementById('voteInstruction').textContent = 
         'You voted for ' + playerName + '. Waiting for other players...';
+      
       
       socket.emit('vote-player', socketId);
     };
