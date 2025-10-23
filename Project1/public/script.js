@@ -1,15 +1,6 @@
-const CUT = 1;
-const parts = location.pathname.replace(/\/+$/,'').split('/').filter(Boolean);
-const base = parts.length ? parts.slice(0, -CUT).join('/') : '';
-
-console.log('🔍 Detected base path:', base);
-console.log('🔍 Full Socket.IO path:', base + '/socket.io');
-
-
-const socket = io({ 
-  path: base ? '/' + base + '/socket.io' : '/socket.io',
-  transports: ['polling', 'websocket']
-});
+//const socket = io();  
+const prefix = location.pathname.replace(/\/$/, '');  
+const socket = io({ path: prefix + '/socket.io' });
 
 let mySocketId = '';
 let allPlayers = {};

@@ -74,16 +74,7 @@
     <button id="playAgainBtn">Play Again</button>
   </div>
 
- <script>
-  // Detect base path
-  const parts = location.pathname.replace(/\/+$/,'').split('/').filter(Boolean);
-  const base = parts.length ? parts.slice(0, -1).join('/') : '';
-  
-  // Load Socket.IO from correct path
-  const script = document.createElement('script');
-  script.src = (base ? '/' + base : '') + '/socket.io/socket.io.js';
-  document.head.appendChild(script);
-</script>
-<script src="script.js"></script>
+  <script src="socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
