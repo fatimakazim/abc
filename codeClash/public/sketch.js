@@ -162,7 +162,7 @@ function draw() {
   // Display team badge in top-left
   if (myTeam) {
       push();
-      let badgeX = 20;
+      let badgeX = 20 + 40;
       let badgeY = 20;
       let badgeSize = 60;
     
