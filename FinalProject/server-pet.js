@@ -54,4 +54,4 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(3013, () => console.log('🚀 Server running on https://localhost:3013'));
+server.listen(4222, () => console.log('🚀 Server running on https://localhost:4222'));
