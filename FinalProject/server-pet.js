@@ -4,14 +4,18 @@ const fs = require('fs');
 const { Server } = require("socket.io");
 
 const app = express();
+
+// 1. Setup the HTTPS options (Matches your working game code)
 const options = {
   key: fs.readFileSync('keys-for-local-https/localhost-key.pem'),
   cert: fs.readFileSync('keys-for-local-https/localhost.pem')
 };
 
+app.use(express.static('public'));
+
+// 2. Create HTTPS server
 const server = https.createServer(options, app);
 const io = new Server(server, { maxHttpBufferSize: 1e8 });
-app.use(express.static('public'));
 
 let activeRooms = {}; 
 
@@ -54,4 +58,7 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(4222, () => console.log('🚀 Server running on https://localhost:4222'));
+// 3. Listen on Port 4222
+server.listen(4222, () => {
+  console.log('🚀 Server running on https://localhost:4222');
+});
