@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🐾 Pet Room</title>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="login-screen" class="screen">
+    <h1>🐾 PocketPet</h1>
+    <p>Name your new friend:</p>
+    <input type="text" id="pet-name" placeholder="e.g. Fluffy" maxlength="15">
+    <button id="start-btn" class="primary-btn">Start Creating →</button>
+  </div>
+
+  <div id="drawing-screen" class="screen hidden">
+    <div class="header-bar">
+      <h2>🎨 Draw Your Pet</h2>
+    </div>
+
+    <div class="tools-container">
+      <div class="tool-group">
+        <button class="tool-btn active" data-tool="pen">🖊️ Pen</button>
+        <button class="tool-btn" data-tool="eraser">🧹 Eraser</button>
+        <button class="tool-btn" data-tool="clear">🗑️ Reset</button>
+      </div>
+      <div class="color-group">
+        <div class="color-dot active" style="background:black" data-color="#000000"></div>
+        <div class="color-dot" style="background:#582e2e" data-color="#FF6B6B"></div>
+        <div class="color-dot" style="background:#d6a86c" data-color="#4ECDC4"></div>
+      </div>
+    </div>
+
+    <div id="drawing-canvas-wrapper" class="canvas-box"></div>
+    <button id="finish-drawing-btn" class="primary-btn">Save & Enter Room ✨</button>
+  </div>
+
+  <div id="room-screen" class="screen hidden">
+    <div class="room-header">
+      <h2 id="room-title">🏠 My Room</h2>
+      <div class="room-stats">
+        <span id="happiness-display">❤️❤️❤️❤️❤️</span>
+      </div>
+    </div>
+
+    <div id="emote-bar">
+      <button class="emote-btn">👋</button>
+      <button class="emote-btn">😂</button>
+      <button class="emote-btn">❤️</button>
+      <button class="emote-btn">😡</button>
+      <button class="emote-btn">😴</button>
+    </div>
+
+    <div id="game-canvas-wrapper" class="canvas-box"></div>
+
+    <div class="room-controls">
+      <button id="add-furniture-btn" class="action-btn">🪑 Decorate</button>
+      <button id="visit-friend-btn" class="action-btn">✈️ Visit Friend</button>
+      <button id="go-home-btn" class="action-btn hidden">🏠 Go Home</button>
+    </div>
+  </div>
+
+  <div id="furniture-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Pick Furniture</h3>
+      <div class="furniture-grid">
+        <div class="furn-item" data-type="bed"><img src="furniture/bed.png" onerror="this.src=''" alt="Bed"><span>Bed</span></div>
+        <div class="furn-item" data-type="table"><img src="furniture/table.png" onerror="this.src=''" alt="Table"><span>Table</span></div>
+        <div class="furn-item" data-type="plant"><img src="furniture/plant.png" onerror="this.src=''" alt="Plant"><span>Plant</span></div>
+        <div class="furn-item" data-type="sofa"><img src="furniture/sofa.png" onerror="this.src=''" alt="Sofa"><span>Sofa</span></div>
+      </div>
+      <button class="close-modal" data-target="furniture-modal">Cancel</button>
+    </div>
+  </div>
+
+  <div id="friends-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Visit a Friend</h3>
+      <div id="friends-list-container"></div>
+      <button class="close-modal" data-target="friends-modal">Cancel</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
