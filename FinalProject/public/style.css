@@ -39,7 +39,7 @@ h1, h2, h3 { color: #333; margin: 0; text-align: center; }
   background: white; 
   margin: 10px 0;
   display: flex; justify-content: center; align-items: center;
-  /* CRITICAL FOR DRAWING: Stops page scrolling when touching canvas */
+  
   touch-action: none; 
 }
 

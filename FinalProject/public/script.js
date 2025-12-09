@@ -148,7 +148,7 @@ function loadGameData() {
   }
 }
 
-// --- DRAWING CANVAS (With Mobile Fixes) ---
+// --- DRAWING CANVAS  ---
 function initDrawingCanvas() {
   if(drawingSketch) return;
   const s = (p) => {
@@ -192,7 +192,7 @@ function initDrawingCanvas() {
   drawingSketch = new p5(s, 'drawing-canvas-wrapper');
 }
 
-// --- ROOM CANVAS (With Mobile Fixes) ---
+// --- ROOM CANVAS  ---
 function initRoomCanvas() {
   if(roomSketch) return;
   const s = (p) => {

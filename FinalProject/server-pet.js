@@ -4,17 +4,16 @@ const fs = require('fs');
 const { Server } = require("socket.io");
 
 const app = express();
+const portHTTPS = 4222;
+
 
 const options = {
   key: fs.readFileSync('keys-for-local-https/localhost-key.pem'),
   cert: fs.readFileSync('keys-for-local-https/localhost.pem')
 };
 
-// --- FIX FOR 404 ERROR ---
-// Allow the 'public' folder to be seen at the main URL AND the specific path
 app.use(express.static('public'));
-app.use('/fatima/port-4222', express.static('public'));
-// -------------------------
+
 
 const server = https.createServer(options, app);
 const io = new Server(server, { maxHttpBufferSize: 1e8 });
@@ -41,10 +40,12 @@ io.on('connection', (socket) => {
     }
   });
 
+  // FEATURE 1: Relay Emote
   socket.on('send-emote', (data) => {
     io.to(data.targetId).emit('receive-emote', data.emoji);
   });
 
+  // FEATURE 3: Relay Gift
   socket.on('send-gift', (data) => {
     io.to(data.targetId).emit('receive-gift', data.type);
   });
@@ -58,8 +59,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// --- FIX FOR CRASH ---
-// Using the correct variable 'server' and port 4222
-server.listen(4222, () => {
-    console.log("HTTPS Server started at port 4222");
+
+HTTPSserver.listen(portHTTPS, function (req, res) {
+    console.log("HTTPS Server started at port", portHTTPS);
 });
