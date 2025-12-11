@@ -25,7 +25,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function setupSocket() {
  if (location.hostname.toLowerCase().startsWith('browsercircus') || location.hostname.toLowerCase().startsWith('www')) {
-  socket = io({ path: "/fatima/port-4222/socket.io" });
+  socket = io({ path: "/fatima/port-4220/socket.io" });
 } else {
   socket = io();
 }
