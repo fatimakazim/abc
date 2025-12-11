@@ -2,18 +2,18 @@ const express = require('express');
 const https = require("https");
 const fs = require("fs");
 
-
 const app = express();
 app.use(express.static('public'));
 
-
 const options = {
-key: fs.readFileSync("keys-for-local-https/localhost-key.pem"),
-cert: fs.readFileSync("keys-for-local-https/localhost.pem"),
+  key: fs.readFileSync("keys-for-local-https/localhost-key.pem"),
+  cert: fs.readFileSync("keys-for-local-https/localhost.pem"),
 };
 const server = https.createServer(options, app);
 const { Server } = require("socket.io");
-const io = new Server(server);
+const io = new Server(server, {
+  path: "/fatima/port-4222/socket.io"
+});
 
 let activeRooms = {}; 
 
@@ -37,12 +37,10 @@ io.on('connection', (socket) => {
     }
   });
 
-  // FEATURE 1: Relay Emote
   socket.on('send-emote', (data) => {
     io.to(data.targetId).emit('receive-emote', data.emoji);
   });
 
-  // FEATURE 3: Relay Gift
   socket.on('send-gift', (data) => {
     io.to(data.targetId).emit('receive-gift', data.type);
   });
@@ -56,9 +54,7 @@ io.on('connection', (socket) => {
   });
 });
 
-
 const portHTTPS = 4222;
-HTTPSserver.listen(portHTTPS, function () {
+server.listen(portHTTPS, '0.0.0.0', function () {
     console.log("HTTPS Server started at port", portHTTPS);
 });
-
