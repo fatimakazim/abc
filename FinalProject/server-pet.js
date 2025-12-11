@@ -57,6 +57,7 @@ io.on('connection', (socket) => {
 
 
 
-server.listen(portHTTPS, '0.0.0.0', () => {
+server.listen(portHTTPS, () => {
+
     console.log("HTTPS Server started at port", portHTTPS);
 });
