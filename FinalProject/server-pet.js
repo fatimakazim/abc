@@ -3,6 +3,7 @@ const https = require("https");
 const fs = require("fs");
 
 const app = express();
+const portHTTPS = 4222;
 app.use(express.static('public'));
 
 const options = {
@@ -54,7 +55,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const portHTTPS = 4222;
-server.listen(portHTTPS, '0.0.0.0', function () {
-    console.log("HTTPS Server started at port", portHTTPS);
+
+httpsServer.listen(portHTTPS, () => {
+   console.log("HTTPS Server started at port", portHTTPS);
 });
