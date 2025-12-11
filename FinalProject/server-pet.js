@@ -10,11 +10,8 @@ const options = {
   key: fs.readFileSync("keys-for-local-https/localhost-key.pem"),
   cert: fs.readFileSync("keys-for-local-https/localhost.pem"),
 };
-const server = https.createServer(options, app);
-const { Server } = require("socket.io");
-const io = new Server(server, {
-  path: "/fatima/port-4222/socket.io"
-});
+const httpsServer = https.createServer(options, app);
+const io = new Server(httpsServer);
 
 let activeRooms = {}; 
 
