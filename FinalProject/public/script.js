@@ -24,7 +24,11 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupSocket() {
+ if (location.hostname.toLowerCase().startsWith('browsercircus') || location.hostname.toLowerCase().startsWith('www')) {
+  socket = io({ path: "/fatima/port-4222/socket.io" });
+} else {
   socket = io();
+}
   
   socket.on('update-room-list', (rooms) => { allRooms = rooms; updateFriendsUI(); });
   
