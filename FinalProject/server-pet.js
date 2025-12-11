@@ -57,8 +57,7 @@ io.on('connection', (socket) => {
 });
 
 
-
-server.listen(4222, () => {
- console.log("Server running on https://localhost:4220");
+HTTPSserver.listen(portHTTPS, function (req, res) {
+    console.log("HTTPS Server started at port", portHTTPS);
 });
 
