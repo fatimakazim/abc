@@ -1,22 +1,19 @@
 const express = require('express');
-const https = require('https');
-const fs = require('fs');
-const { Server } = require("socket.io");
+const https = require("https");
+const fs = require("fs");
+
 
 const app = express();
-const portHTTPS = 4222;
-
-
-const options = {
-  key: fs.readFileSync('keys-for-local-https/localhost-key.pem'),
-  cert: fs.readFileSync('keys-for-local-https/localhost.pem')
-};
-
 app.use(express.static('public'));
 
 
+const options = {
+key: fs.readFileSync("keys-for-local-https/localhost-key.pem"),
+cert: fs.readFileSync("keys-for-local-https/localhost.pem"),
+};
 const server = https.createServer(options, app);
-const io = new Server(server, { maxHttpBufferSize: 1e8 });
+const { Server } = require("socket.io");
+const io = new Server(server);
 
 let activeRooms = {}; 
 
@@ -60,6 +57,8 @@ io.on('connection', (socket) => {
 });
 
 
-HTTPSserver.listen(portHTTPS, function (req, res) {
-    console.log("HTTPS Server started at port", portHTTPS);
+
+server.listen(4222, () => {
+ console.log("Server running on https://localhost:4220");
 });
+
