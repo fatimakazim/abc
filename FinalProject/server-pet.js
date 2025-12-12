@@ -50,21 +50,38 @@ io.on('connection', (socket) => {
     console.log('✅ SUCCESS: User connected:', socket.id);
 
     socket.on('create-room', (data) => {
-        activeRooms[socket.id] = { socketId: socket.id, name: data.name, image: data.image };
-        io.emit('update-room-list', activeRooms);
-    });
+    activeRooms[socket.id] = { 
+        socketId: socket.id, 
+        name: data.name, 
+        image: data.image,
+        furniture: data.furniture || [] // Stores the furniture list
+    };
+    io.emit('update-room-list', activeRooms);
+  });
 
     socket.on('get-rooms', () => {
         socket.emit('update-room-list', activeRooms);
     });
 
-    socket.on('request-visit', (data) => {
-        const targetId = data.targetId;
-        if (activeRooms[targetId]) {
-            socket.emit('visitor-arrived', activeRooms[targetId]);
-            io.to(targetId).emit('visitor-arrived', { name: data.myData.name, image: data.myData.image });
-        }
-    });
+   socket.on('request-visit', (data) => {
+    const targetId = data.targetId;
+    const hostRoom = activeRooms[targetId];
+    
+    if (hostRoom) {
+      //  Tell the VISITOR  "You successfully joined the room. Here is their data."
+      socket.emit('join-room-success', { 
+          hostName: hostRoom.name,
+          hostImage: hostRoom.image,
+          hostFurniture: hostRoom.furniture
+      });
+
+      //  Tell the HOST (Friend): "Someone has arrived!"
+      io.to(targetId).emit('visitor-arrived', { 
+          name: data.myData.name, 
+          image: data.myData.image 
+      });
+    }
+  });
 
     socket.on('send-emote', (data) => {
         io.to(data.targetId).emit('receive-emote', data.emoji);
