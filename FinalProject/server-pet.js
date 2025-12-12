@@ -26,7 +26,6 @@ const server = https.createServer(options, app);
 const { Server } = require("socket.io");
 
 const io = new Server(server, {
-    
     path: "/socket.io",
     cors: {
         origin: "*", // Allow all connections
@@ -36,7 +35,6 @@ const io = new Server(server, {
 });
 
 // LOW-LEVEL DEBUGGING 
-
 server.on('request', (req, res) => {
     // Only log socket requests to avoid spamming
     if (req.url.includes('socket.io')) {
@@ -50,38 +48,47 @@ io.on('connection', (socket) => {
     console.log('✅ SUCCESS: User connected:', socket.id);
 
     socket.on('create-room', (data) => {
-    activeRooms[socket.id] = { 
-        socketId: socket.id, 
-        name: data.name, 
-        image: data.image,
-        furniture: data.furniture || [] // Stores the furniture list
-    };
-    io.emit('update-room-list', activeRooms);
-  });
+        activeRooms[socket.id] = { 
+            socketId: socket.id, 
+            name: data.name, 
+            image: data.image,
+            furniture: data.furniture || [] // Stores the furniture list
+        };
+        io.emit('update-room-list', activeRooms);
+    });
+
+    // --- LISTEN FOR FURNITURE UPDATES ---
+    socket.on('update-room-data', (data) => {
+        if (activeRooms[socket.id]) {
+            activeRooms[socket.id].furniture = data.furniture;
+           
+            // socket.broadcast.to(socket.id).emit('sync-furniture', data.furniture);
+        }
+    });
 
     socket.on('get-rooms', () => {
         socket.emit('update-room-list', activeRooms);
     });
 
-   socket.on('request-visit', (data) => {
-    const targetId = data.targetId;
-    const hostRoom = activeRooms[targetId];
-    
-    if (hostRoom) {
-      //  Tell the VISITOR  "You successfully joined the room. Here is their data."
-      socket.emit('join-room-success', { 
-          hostName: hostRoom.name,
-          hostImage: hostRoom.image,
-          hostFurniture: hostRoom.furniture
-      });
+    socket.on('request-visit', (data) => {
+        const targetId = data.targetId;
+        const hostRoom = activeRooms[targetId];
+        
+        if (hostRoom) {
+            // Tell the VISITOR "You successfully joined the room. Here is their data."
+            socket.emit('join-room-success', { 
+                hostName: hostRoom.name,
+                hostImage: hostRoom.image,
+                hostFurniture: hostRoom.furniture
+            });
 
-      //  Tell the HOST (Friend): "Someone has arrived!"
-      io.to(targetId).emit('visitor-arrived', { 
-          name: data.myData.name, 
-          image: data.myData.image 
-      });
-    }
-  });
+            // Tell the HOST (Friend): "Someone has arrived!"
+            io.to(targetId).emit('visitor-arrived', { 
+                name: data.myData.name, 
+                image: data.myData.image 
+            });
+        }
+    });
 
     socket.on('send-emote', (data) => {
         io.to(data.targetId).emit('receive-emote', data.emoji);

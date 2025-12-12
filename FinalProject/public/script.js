@@ -32,7 +32,7 @@ function setupSocket() {
   
   socket.on('update-room-list', (rooms) => { allRooms = rooms; updateFriendsUI(); });
   
-  //  Handler for when YOU visit SOMEONE ELSE
+  // Handler for when I visit SOMEONE ELSE
   socket.on('join-room-success', (hostData) => {
     alert(`You are visiting ${hostData.hostName}!`);
     document.getElementById('room-title').innerText = `🏠 Visiting ${hostData.hostName}`;
@@ -42,14 +42,13 @@ function setupSocket() {
         name: hostData.hostName, 
         image: hostData.hostImage, 
         x: 250, y: 350, // Host usually stands in center
-        socketId: null // We don't need to send messages to ourselves
+        socketId: null 
     };
 
-    //  Load THEIR furniture temporarily
-    // We don't save this to localStorage so we don't overwrite our own stuff
+    // 2. Load THEIR furniture temporarily
     furnitureList = hostData.hostFurniture || [];
     
-    //  Move MY pet to the "visitor" position (left side)
+    // 3. Move MY pet to the "visitor" position (left side)
     myPet.x = 100;
     
     // 4. Update UI buttons
@@ -57,7 +56,7 @@ function setupSocket() {
     document.getElementById('go-home-btn').classList.remove('hidden');
   });
   
-  //  Handler for when SOMEONE VISITS ME
+  // Handler for when SOMEONE VISITS ME
   socket.on('visitor-arrived', (visitorData) => {
     // Visitor appears on the left
     friendPet = { ...visitorData, x: 100, y: 350 }; 
@@ -89,7 +88,7 @@ function setupUI() {
     saveGameData();
     showScreen('room');
     initRoomCanvas();
-   socket.emit('create-room', { 
+    socket.emit('create-room', { 
         name: myPet.name, 
         image: myPet.image,
         furniture: furnitureList 
@@ -120,6 +119,10 @@ function setupUI() {
     item.onclick = () => {
       furnitureList.push({ type: item.dataset.type, x: 250, y: 300 });
       saveGameData();
+      
+      // ---  Sync added furniture with server ---
+      socket.emit('update-room-data', { furniture: furnitureList });
+
       document.getElementById('furniture-modal').classList.add('hidden');
     };
   });
@@ -135,13 +138,14 @@ function setupUI() {
     document.getElementById('visit-friend-btn').classList.remove('hidden');
     document.getElementById('go-home-btn').classList.add('hidden');
     
-    // Send furnitureList again when going home
+    // Send furnitureList again when going home to reset server state
     socket.emit('create-room', { 
         name: myPet.name, 
         image: myPet.image,
         furniture: furnitureList 
     });
-  };}
+  };
+}
   
 
 function updateFriendsUI() {
@@ -191,7 +195,7 @@ function loadGameData() {
     if(myPet.image) {
       showScreen('room');
       initRoomCanvas();
-      setTimeout(() => socket.emit('create-room', { name: myPet.name, image: myPet.image }), 500);
+      setTimeout(() => socket.emit('create-room', { name: myPet.name, image: myPet.image, furniture: furnitureList }), 500);
     }
   }
 }
@@ -309,7 +313,15 @@ function initRoomCanvas() {
       }
     };
     p.mouseDragged = () => { if(draggedFurniture) { draggedFurniture.x = p.mouseX; draggedFurniture.y = p.mouseY; }};
-    p.mouseReleased = () => { if(draggedFurniture) { draggedFurniture = null; saveGameData(); }};
+    
+    p.mouseReleased = () => { 
+        if(draggedFurniture) { 
+            draggedFurniture = null; 
+            saveGameData(); 
+            // ---  Sync moved furniture with server ---
+            socket.emit('update-room-data', { furniture: furnitureList });
+        }
+    };
   };
   roomSketch = new p5(s, 'game-canvas-wrapper');
 }
