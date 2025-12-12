@@ -9,6 +9,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
   
   <link rel="stylesheet" href="style.css">
+  <style>
+      /* New Style for Wall Color Buttons */
+      .color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; }
+      .color-btn:hover { transform: scale(1.1); border-color: #333; }
+      /* Style for Delete Mode */
+      .delete-active { background-color: #ff4444 !important; color: white !important; border: 2px solid darkred; }
+  </style>
 </head>
 <body>
 
@@ -26,14 +33,11 @@
 
     <div class="tools-container">
       <div class="tool-group">
-        <button class="tool-btn active" data-tool="pen">🖊️ Pen</button>
+        <button class="tool-btn active" data-tool="pen">🖊️ Black Pen</button>
+        <button class="tool-btn" data-tool="spray">Spray (Brown)</button>
+        <button class="tool-btn" data-tool="spotted">Spots (Yellow)</button>
         <button class="tool-btn" data-tool="eraser">🧹 Eraser</button>
         <button class="tool-btn" data-tool="clear">🗑️ Reset</button>
-      </div>
-      <div class="color-group">
-        <div class="color-dot active" style="background:black" data-color="#000000"></div>
-        <div class="color-dot" style="background:#582e2e" data-color="#FF6B6B"></div>
-        <div class="color-dot" style="background:#d6a86c" data-color="#4ECDC4"></div>
       </div>
     </div>
 
@@ -43,24 +47,27 @@
 
   <div id="room-screen" class="screen hidden">
     <div class="room-header">
-      <h2 id="room-title">🏠 My Room</h2>
+      <h2 id="room-title"> My Room</h2>
       <div class="room-stats">
         <span id="happiness-display">❤️❤️❤️❤️❤️</span>
       </div>
     </div>
 
+    <p style="font-size: 12px; color: #666;">Change Wall Color:</p>
     <div id="emote-bar">
-      <button class="emote-btn">👋</button>
-      <button class="emote-btn">😂</button>
-      <button class="emote-btn">❤️</button>
-      <button class="emote-btn">😡</button>
-      <button class="emote-btn">😴</button>
+      <div class="color-btn" style="background:#f0f8ff" data-color="#f0f8ff"></div>
+      <div class="color-btn" style="background:#ffe4e1" data-color="#ffe4e1"></div>
+      <div class="color-btn" style="background:#e6e6fa" data-color="#e6e6fa"></div>
+      <div class="color-btn" style="background:#f0fff0" data-color="#f0fff0"></div>
+      <div class="color-btn" style="background:#fffacd" data-color="#fffacd"></div>
     </div>
 
     <div id="game-canvas-wrapper" class="canvas-box"></div>
 
     <div class="room-controls">
-      <button id="add-furniture-btn" class="action-btn">🪑 Decorate</button>
+      <button id="add-furniture-btn" class="action-btn">🪑 Add Item</button>
+      <button id="delete-mode-btn" class="action-btn">🗑️ Delete Item</button>
+      
       <button id="visit-friend-btn" class="action-btn">✈️ Visit Friend</button>
       <button id="go-home-btn" class="action-btn hidden">🏠 Go Home</button>
     </div>

@@ -5,16 +5,17 @@ let allRooms = {};
 
 let happiness = 5;
 let lastInteractionTime = Date.now(); 
+
+// --- NEW STATE VARIABLES ---
 let furnitureList = []; 
 let furnitureImages = {}; 
+let wallColor = '#f0f8ff'; // Default Light Blue
+let isDeleteMode = false;  // Track if we are deleting items
 
 let drawingSketch, roomSketch;
 let bounceVal = 0;
 let reactionTimer = 0;
 let draggedFurniture = null;
-
-let currentEmote = null;
-let emoteTimer = 0;
 
 // --- INITIALIZE ---
 window.addEventListener('DOMContentLoaded', () => {
@@ -32,33 +33,32 @@ function setupSocket() {
   
   socket.on('update-room-list', (rooms) => { allRooms = rooms; updateFriendsUI(); });
   
-  // Handler for when I visit SOMEONE ELSE
   socket.on('join-room-success', (hostData) => {
     alert(`You are visiting ${hostData.hostName}!`);
     document.getElementById('room-title').innerText = `🏠 Visiting ${hostData.hostName}`;
     
-    // 1. Set the friendPet as the HOST (the owner of the room)
     friendPet = { 
         name: hostData.hostName, 
         image: hostData.hostImage, 
-        x: 250, y: 350, // Host usually stands in center
+        x: 250, y: 350, 
         socketId: null 
     };
 
-    // 2. Load THEIR furniture temporarily
+    // Load Host's Room Data
     furnitureList = hostData.hostFurniture || [];
+    wallColor = hostData.hostWallColor || '#f0f8ff'; // Sync Wall Color
     
-    // 3. Move MY pet to the "visitor" position (left side)
     myPet.x = 100;
     
-    // 4. Update UI buttons
     document.getElementById('visit-friend-btn').classList.add('hidden');
     document.getElementById('go-home-btn').classList.remove('hidden');
+    // Hide controls when visiting
+    document.getElementById('add-furniture-btn').classList.add('hidden');
+    document.getElementById('delete-mode-btn').classList.add('hidden');
+    document.getElementById('emote-bar').classList.add('hidden');
   });
   
-  // Handler for when SOMEONE VISITS ME
   socket.on('visitor-arrived', (visitorData) => {
-    // Visitor appears on the left
     friendPet = { ...visitorData, x: 100, y: 350 }; 
     alert(`${visitorData.name} has arrived!`);
     changeHappiness(1);
@@ -67,11 +67,6 @@ function setupSocket() {
   socket.on('visitor-left', () => { 
       friendPet = null; 
       alert("The visitor went home.");
-  });
-
-  socket.on('receive-emote', (emoji) => {
-    currentEmote = emoji;
-    emoteTimer = 100; 
   });
 }
 
@@ -91,22 +86,38 @@ function setupUI() {
     socket.emit('create-room', { 
         name: myPet.name, 
         image: myPet.image,
-        furniture: furnitureList 
+        furniture: furnitureList,
+        wallColor: wallColor
     });
   };
 
-  document.querySelectorAll('.emote-btn').forEach(btn => {
+  // ---  Wall Color Buttons ---
+  document.querySelectorAll('.color-btn').forEach(btn => {
     btn.onclick = (e) => {
-      const emoji = e.target.innerText;
-      currentEmote = emoji;
-      emoteTimer = 100;
-      if(friendPet) {
-        socket.emit('send-emote', { targetId: friendPet.socketId, emoji: emoji });
+      // Only allow changing color if NOT visiting
+      if(document.getElementById('go-home-btn').classList.contains('hidden')) {
+        wallColor = e.target.dataset.color;
+        saveGameData();
+        socket.emit('update-room-data', { wallColor: wallColor });
       }
     };
   });
 
   document.getElementById('add-furniture-btn').onclick = () => document.getElementById('furniture-modal').classList.remove('hidden');
+  
+  // ---  Delete Mode Button ---
+  const delBtn = document.getElementById('delete-mode-btn');
+  delBtn.onclick = () => {
+      isDeleteMode = !isDeleteMode; // Toggle mode
+      if(isDeleteMode) {
+          delBtn.innerText = "❌ Click Item to Delete";
+          delBtn.classList.add('delete-active');
+      } else {
+          delBtn.innerText = "🗑️ Delete Item";
+          delBtn.classList.remove('delete-active');
+      }
+  };
+
   document.getElementById('visit-friend-btn').onclick = () => {
     document.getElementById('friends-modal').classList.remove('hidden');
     socket.emit('get-rooms');
@@ -119,10 +130,7 @@ function setupUI() {
     item.onclick = () => {
       furnitureList.push({ type: item.dataset.type, x: 250, y: 300 });
       saveGameData();
-      
-      // ---  Sync added furniture with server ---
       socket.emit('update-room-data', { furniture: furnitureList });
-
       document.getElementById('furniture-modal').classList.add('hidden');
     };
   });
@@ -130,23 +138,25 @@ function setupUI() {
   document.getElementById('go-home-btn').onclick = () => {
     socket.emit('leave-room');
     friendPet = null;
-    
-    // RESTORE: Force reload of my own data to ensure I see my stuff
-    loadGameData(); 
+    loadGameData(); // Reload my own data
     
     document.getElementById('room-title').innerText = "🏠 My Room";
     document.getElementById('visit-friend-btn').classList.remove('hidden');
     document.getElementById('go-home-btn').classList.add('hidden');
     
-    // Send furnitureList again when going home to reset server state
+    // Show controls again
+    document.getElementById('add-furniture-btn').classList.remove('hidden');
+    document.getElementById('delete-mode-btn').classList.remove('hidden');
+    document.getElementById('emote-bar').classList.remove('hidden');
+    
     socket.emit('create-room', { 
         name: myPet.name, 
         image: myPet.image,
-        furniture: furnitureList 
+        furniture: furnitureList,
+        wallColor: wallColor
     });
   };
 }
-  
 
 function updateFriendsUI() {
   const container = document.getElementById('friends-list-container');
@@ -167,10 +177,6 @@ function updateFriendsUI() {
     row.querySelector('button').onclick = () => {
       socket.emit('request-visit', { targetId: f.socketId, myData: myPet });
       document.getElementById('friends-modal').classList.add('hidden');
-      document.getElementById('room-title').innerText = `🏠 Visiting ${f.name}`;
-      
-      document.getElementById('visit-friend-btn').classList.add('hidden');
-      document.getElementById('go-home-btn').classList.remove('hidden');
     };
     container.appendChild(row);
   });
@@ -182,7 +188,7 @@ function showScreen(id) {
 }
 
 function saveGameData() {
-  localStorage.setItem('petRoomSave', JSON.stringify({ myPet, furnitureList, happiness }));
+  localStorage.setItem('petRoomSave', JSON.stringify({ myPet, furnitureList, happiness, wallColor }));
 }
 
 function loadGameData() {
@@ -192,29 +198,33 @@ function loadGameData() {
     myPet = data.myPet;
     furnitureList = data.furnitureList;
     happiness = data.happiness;
+    wallColor = data.wallColor || '#f0f8ff'; // Default color
+    
     if(myPet.image) {
       showScreen('room');
       initRoomCanvas();
-      setTimeout(() => socket.emit('create-room', { name: myPet.name, image: myPet.image, furniture: furnitureList }), 500);
+      setTimeout(() => socket.emit('create-room', { 
+          name: myPet.name, 
+          image: myPet.image, 
+          furniture: furnitureList,
+          wallColor: wallColor
+      }), 500);
     }
   }
 }
 
-// --- DRAWING CANVAS  ---
+// --- UPDATED DRAWING CANVAS ---
 function initDrawingCanvas() {
   if(drawingSketch) return;
   const s = (p) => {
     let currentTool = 'pen';
-    let currentColor = '#000000';
     
     p.setup = () => { 
-      // DYNAMIC SIZE: Fits the mobile screen
       let size = Math.min(window.innerWidth - 40, 350);
       p.createCanvas(size, size); 
       p.clear(); 
       p.textAlign(p.CENTER, p.CENTER);
       
-      // Stop scrolling when touching canvas
       let c = document.querySelector('#drawing-canvas-wrapper canvas');
       if(c) {
         c.addEventListener('touchstart', (e)=>e.preventDefault(), {passive:false});
@@ -224,33 +234,53 @@ function initDrawingCanvas() {
     
     p.draw = () => {
       if (p.mouseIsPressed) {
+        // ---  PEN TOOLS ---
         if (currentTool === 'pen') {
-          p.noErase(); p.stroke(currentColor); p.strokeWeight(5);
-          p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
-        } else if (currentTool === 'eraser') {
+          p.stroke(0); p.strokeWeight(5); p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
+        } 
+        else if (currentTool === 'spray') {
+          // Brown Spray: 
+          p.stroke('#8B4513'); p.strokeWeight(2);
+          for(let i=0; i<10; i++) {
+            let angle = p.random(p.TWO_PI);
+            let r = p.random(15);
+            p.point(p.mouseX + p.cos(angle)*r, p.mouseY + p.sin(angle)*r);
+          }
+        } 
+        else if (currentTool === 'spotted') {
+          // Yellow Spotted
+          p.noStroke(); p.fill('#FFD700'); 
+          // Only draw every few frames to create gaps/spots
+          if(p.frameCount % 5 === 0) {
+             p.ellipse(p.mouseX, p.mouseY, 15, 15);
+          }
+        } 
+        else if (currentTool === 'eraser') {
           p.erase(); p.strokeWeight(20);
           p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY); p.noErase();
         }
       }
-      // Draw guide eyes in the center
       drawCharacterEyes(p, p.width/2, p.height/2, 'happy');
     };
     
     document.querySelectorAll('.tool-btn').forEach(b => b.onclick = (e) => {
-      if(e.target.dataset.tool === 'clear') p.clear(); else currentTool = e.target.dataset.tool;
+      if(e.target.dataset.tool === 'clear') p.clear(); 
+      else {
+          document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+          e.target.classList.add('active');
+          currentTool = e.target.dataset.tool;
+      }
     });
-    document.querySelectorAll('.color-dot').forEach(b => b.onclick = (e) => currentColor = e.target.dataset.color);
   };
   drawingSketch = new p5(s, 'drawing-canvas-wrapper');
 }
 
-// --- ROOM CANVAS  ---
+// ---  ROOM CANVAS ---
 function initRoomCanvas() {
   if(roomSketch) return;
   const s = (p) => {
     let myPetImg, friendPetImg;
     p.setup = () => {
-      // DYNAMIC SIZE: Width of screen, limited height
       let w = Math.min(window.innerWidth - 30, 500);
       let h = Math.min(window.innerHeight * 0.6, 400);
       p.createCanvas(w, h); 
@@ -259,7 +289,6 @@ function initRoomCanvas() {
       if(myPet.image) myPetImg = p.loadImage(myPet.image);
       ['bed','table','plant','sofa'].forEach(k => furnitureImages[k] = p.loadImage(`furniture/${k}.png`));
 
-      // Stop scrolling when touching room
       let c = document.querySelector('#game-canvas-wrapper canvas');
       if(c) {
         c.addEventListener('touchstart', (e)=>e.preventDefault(), {passive:false});
@@ -267,7 +296,8 @@ function initRoomCanvas() {
       }
     };
     p.draw = () => {
-      p.background('#f0f8ff');
+      // USE NEW WALL COLOR
+      p.background(wallColor);
       p.noStroke(); p.fill('#e1d2b8'); p.rect(0, p.height-100, p.width, 100);
 
       if (Date.now() - lastInteractionTime > 10000 && happiness > 0) {
@@ -290,20 +320,27 @@ function initRoomCanvas() {
       updatePet(p, myPet, myPetImg, true);
       
       if(reactionTimer > 0) { p.textSize(30); p.text('❤️', myPet.x, myPet.y - 70); reactionTimer--; }
-
-      if (emoteTimer > 0 && currentEmote) {
-        p.textSize(50);
-        p.text(currentEmote, myPet.x, myPet.y - 90);
-        emoteTimer--;
-      }
     };
 
+    // ---  DELETE LOGIC ---
     p.mousePressed = () => {
       for(let i=furnitureList.length-1; i>=0; i--) {
         if(p.dist(p.mouseX, p.mouseY, furnitureList[i].x, furnitureList[i].y) < 40) {
-          draggedFurniture = furnitureList[i]; return;
+          
+          if(isDeleteMode) {
+             // DELETE ITEM
+             furnitureList.splice(i, 1);
+             saveGameData();
+             socket.emit('update-room-data', { furniture: furnitureList });
+          } else {
+             // DRAG ITEM
+             draggedFurniture = furnitureList[i]; 
+          }
+          return;
         }
       }
+      
+      // Pet Interactions
       if(p.dist(p.mouseX, p.mouseY, myPet.x, myPet.y) < 50) {
         changeHappiness(1); 
         reactionTimer = 20; 
@@ -312,13 +349,13 @@ function initRoomCanvas() {
         saveGameData();
       }
     };
-    p.mouseDragged = () => { if(draggedFurniture) { draggedFurniture.x = p.mouseX; draggedFurniture.y = p.mouseY; }};
+    
+    p.mouseDragged = () => { if(draggedFurniture && !isDeleteMode) { draggedFurniture.x = p.mouseX; draggedFurniture.y = p.mouseY; }};
     
     p.mouseReleased = () => { 
         if(draggedFurniture) { 
             draggedFurniture = null; 
             saveGameData(); 
-            // ---  Sync moved furniture with server ---
             socket.emit('update-room-data', { furniture: furnitureList });
         }
     };
@@ -335,7 +372,6 @@ function updatePet(p, pet, img, isMine) {
 
   if (mood !== 'tired') {
     if(p.frameCount % 60 === 0) pet.moveDir = Math.random() > 0.5 ? 1 : Math.random() > 0.7 ? 0 : -1;
-    // Constrain to screen width dynamically
     pet.x = p.constrain(pet.x + (pet.moveDir||0), 50, p.width - 50);
   }
 
@@ -356,11 +392,8 @@ function updatePet(p, pet, img, isMine) {
   if((pet.moveDir||0) < 0) sX = -1;
   p.scale(sX, 1);
 
-  if(img && img.width > 1) {
-      p.image(img, 0, 0, 80, 80); 
-  } else { 
-      p.textSize(40); p.text("👻", 0, 0); 
-  }
+  if(img && img.width > 1) p.image(img, 0, 0, 80, 80); 
+  else { p.textSize(40); p.text("👻", 0, 0); }
 
   drawCharacterEyes(p, 0, 0, mood);
 
@@ -390,39 +423,23 @@ function changeHappiness(amt) {
 function drawCharacterEyes(p, x, y, mood) {
   p.push();
   p.translate(x, y);
-  
-  let eyeW = 20;       
-  let eyeH = 26;       
-  
   p.fill(255); p.stroke(0); p.strokeWeight(2);
 
   if (mood === 'tired') {
-    p.noFill();
-    p.arc(-12, 5, 20, 10, p.PI, 0); 
-    p.arc(12, 5, 20, 10, p.PI, 0);
+    p.noFill(); p.arc(-12, 5, 20, 10, p.PI, 0); p.arc(12, 5, 20, 10, p.PI, 0);
     p.noStroke(); p.fill(0); p.textSize(15); p.text("z", 25, -10);
   } else if (mood === 'bored') {
-    p.fill(255); p.stroke(0);
-    p.ellipse(-12, 0, eyeW, eyeH); p.ellipse(12, 0, eyeW, eyeH);
-    p.fill(0); p.noStroke();
-    p.ellipse(-12, 2, 6, 6); p.ellipse(12, 2, 6, 6);
-    p.fill(255); p.stroke(0);
-    p.arc(-12, 0, eyeW, eyeH, p.PI, 0, p.CHORD);
-    p.arc(12, 0, eyeW, eyeH, p.PI, 0, p.CHORD);
+    p.fill(255); p.stroke(0); p.ellipse(-12, 0, 20, 26); p.ellipse(12, 0, 20, 26);
+    p.fill(0); p.noStroke(); p.ellipse(-12, 2, 6, 6); p.ellipse(12, 2, 6, 6);
+    p.fill(255); p.stroke(0); p.arc(-12, 0, 20, 26, p.PI, 0, p.CHORD); p.arc(12, 0, 20, 26, p.PI, 0, p.CHORD);
   } else if (mood === 'sad') {
-    p.fill(255); p.stroke(0);
-    p.ellipse(-12, 0, eyeW, eyeH); p.ellipse(12, 0, eyeW, eyeH);
-    p.fill(0); p.noStroke();
-    p.ellipse(-12, 6, 8, 8); p.ellipse(12, 6, 8, 8);
-    p.fill(255);
-    p.ellipse(-10, 4, 3, 3); p.ellipse(14, 4, 3, 3);
+    p.fill(255); p.stroke(0); p.ellipse(-12, 0, 20, 26); p.ellipse(12, 0, 20, 26);
+    p.fill(0); p.noStroke(); p.ellipse(-12, 6, 8, 8); p.ellipse(12, 6, 8, 8);
+    p.fill(255); p.ellipse(-10, 4, 3, 3); p.ellipse(14, 4, 3, 3);
   } else {
-    p.fill(255); p.stroke(0);
-    p.ellipse(-12, 0, eyeW, eyeH); p.ellipse(12, 0, eyeW, eyeH);
-    p.fill(0); p.noStroke();
-    p.ellipse(-12, 0, 10, 12); p.ellipse(12, 0, 10, 12);
-    p.fill(255);
-    p.ellipse(-8, -4, 4, 4); p.ellipse(16, -4, 4, 4);
+    p.fill(255); p.stroke(0); p.ellipse(-12, 0, 20, 26); p.ellipse(12, 0, 20, 26);
+    p.fill(0); p.noStroke(); p.ellipse(-12, 0, 10, 12); p.ellipse(12, 0, 10, 12);
+    p.fill(255); p.ellipse(-8, -4, 4, 4); p.ellipse(16, -4, 4, 4);
   }
   p.pop();
 }

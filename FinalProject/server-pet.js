@@ -6,11 +6,9 @@ const cors = require('cors');
 const app = express();
 const portHTTPS = 4220;
 
-// 1. Enable CORS to allow the browser to talk to the server
 app.use(cors({ origin: "*" })); 
 app.use(express.static('public'));
 
-// 2. Load Keys
 let options = {};
 try {
     options = {
@@ -19,7 +17,7 @@ try {
     };
     console.log("✅ SSL Keys loaded successfully.");
 } catch (error) {
-    console.error("❌ CRITICAL ERROR: Could not find SSL keys. Server will crash.", error.message);
+    console.error("❌ CRITICAL ERROR: Could not find SSL keys.", error.message);
 }
 
 const server = https.createServer(options, app);
@@ -27,16 +25,10 @@ const { Server } = require("socket.io");
 
 const io = new Server(server, {
     path: "/socket.io",
-    cors: {
-        origin: "*", // Allow all connections
-        methods: ["GET", "POST"],
-        credentials: true
-    }
+    cors: { origin: "*", methods: ["GET", "POST"], credentials: true }
 });
 
-// LOW-LEVEL DEBUGGING 
 server.on('request', (req, res) => {
-    // Only log socket requests to avoid spamming
     if (req.url.includes('socket.io')) {
         console.log(`🔎 Incoming Request: ${req.method} ${req.url}`);
     }
@@ -52,17 +44,17 @@ io.on('connection', (socket) => {
             socketId: socket.id, 
             name: data.name, 
             image: data.image,
-            furniture: data.furniture || [] // Stores the furniture list
+            furniture: data.furniture || [],
+            wallColor: data.wallColor || '#f0f8ff' // New: Save Wall Color
         };
         io.emit('update-room-list', activeRooms);
     });
 
-    // --- LISTEN FOR FURNITURE UPDATES ---
+    // Handle updates (furniture or wall color)
     socket.on('update-room-data', (data) => {
         if (activeRooms[socket.id]) {
-            activeRooms[socket.id].furniture = data.furniture;
-           
-            // socket.broadcast.to(socket.id).emit('sync-furniture', data.furniture);
+            if(data.furniture) activeRooms[socket.id].furniture = data.furniture;
+            if(data.wallColor) activeRooms[socket.id].wallColor = data.wallColor;
         }
     });
 
@@ -75,27 +67,18 @@ io.on('connection', (socket) => {
         const hostRoom = activeRooms[targetId];
         
         if (hostRoom) {
-            // Tell the VISITOR "You successfully joined the room. Here is their data."
             socket.emit('join-room-success', { 
                 hostName: hostRoom.name,
                 hostImage: hostRoom.image,
-                hostFurniture: hostRoom.furniture
+                hostFurniture: hostRoom.furniture,
+                hostWallColor: hostRoom.wallColor // New: Send Wall Color
             });
 
-            // Tell the HOST (Friend): "Someone has arrived!"
             io.to(targetId).emit('visitor-arrived', { 
                 name: data.myData.name, 
                 image: data.myData.image 
             });
         }
-    });
-
-    socket.on('send-emote', (data) => {
-        io.to(data.targetId).emit('receive-emote', data.emoji);
-    });
-
-    socket.on('send-gift', (data) => {
-        io.to(data.targetId).emit('receive-gift', data.type);
     });
 
     socket.on('leave-room', () => { 
