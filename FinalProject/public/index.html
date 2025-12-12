@@ -3,94 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🐾 Pet Room</title>
+  <title>PocketPet 🐾</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
   
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;500;600&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="style.css">
-  <style>
-      /* New Style for Wall Color Buttons */
-      .color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; }
-      .color-btn:hover { transform: scale(1.1); border-color: #333; }
-      /* Style for Delete Mode */
-      .delete-active { background-color: #ff4444 !important; color: white !important; border: 2px solid darkred; }
-  </style>
 </head>
 <body>
 
-  <div id="login-screen" class="screen">
-    <h1>🐾 PocketPet</h1>
-    <p>Name your new friend:</p>
-    <input type="text" id="pet-name" placeholder="e.g. Fluffy" maxlength="15">
-    <button id="start-btn" class="primary-btn">Start Creating →</button>
+  <div id="login-screen" class="screen flex-center">
+    <div class="logo-area">
+      <h1>🐾 PocketPet</h1>
+      <p>Create your tiny friend!</p>
+    </div>
+    <div class="input-group">
+      <input type="text" id="pet-name" placeholder="Name your pet..." maxlength="12">
+    </div>
+    <button id="start-btn" class="primary-btn big-btn">Start Creating →</button>
   </div>
 
-  <div id="drawing-screen" class="screen hidden">
-    <div class="header-bar">
-      <h2>🎨 Draw Your Pet</h2>
-    </div>
-
-    <div class="tools-container">
-      <div class="tool-group">
-        <button class="tool-btn active" data-tool="pen">🖊️ Black Pen</button>
-        <button class="tool-btn" data-tool="spray">Spray (Brown)</button>
-        <button class="tool-btn" data-tool="spotted">Spots (Yellow)</button>
-        <button class="tool-btn" data-tool="eraser">🧹 Eraser</button>
-        <button class="tool-btn" data-tool="clear">🗑️ Reset</button>
-      </div>
+  <div id="drawing-screen" class="screen">
+    <div class="top-bar">
+      <h2>🎨 Draw</h2>
     </div>
 
     <div id="drawing-canvas-wrapper" class="canvas-box"></div>
-    <button id="finish-drawing-btn" class="primary-btn">Save & Enter Room ✨</button>
+
+    <div class="tools-scroll-container">
+      <button class="tool-btn active" data-tool="pen">🖊️ Black</button>
+      <button class="tool-btn" data-tool="spray">🍪 Spray</button>
+      <button class="tool-btn" data-tool="spotted">🧀 Spots</button>
+      <button class="tool-btn" data-tool="eraser">🧹 Eraser</button>
+      <button class="tool-btn danger" data-tool="clear">🗑️ Reset</button>
+    </div>
+
+    <div class="bottom-action">
+      <button id="finish-drawing-btn" class="primary-btn big-btn">✨ Save & Enter</button>
+    </div>
   </div>
 
-  <div id="room-screen" class="screen hidden">
-    <div class="room-header">
-      <h2 id="room-title"> My Room</h2>
-      <div class="room-stats">
+  <div id="room-screen" class="screen">
+    <div class="top-bar space-between">
+      <div class="stats-box">
+        <span class="stat-label">Happiness Bar</span>
         <span id="happiness-display">❤️❤️❤️❤️❤️</span>
+      </div>
+      <div class="room-tag">
+        <h2 id="room-title">🏠 Home</h2>
       </div>
     </div>
 
-    <p style="font-size: 12px; color: #666;">Change Wall Color:</p>
-    <div id="emote-bar">
-      <div class="color-btn" style="background:#f0f8ff" data-color="#f0f8ff"></div>
+    <div class="wall-color-picker">
+      <div class="color-btn selected" style="background:#f0f8ff" data-color="#f0f8ff"></div>
       <div class="color-btn" style="background:#ffe4e1" data-color="#ffe4e1"></div>
       <div class="color-btn" style="background:#e6e6fa" data-color="#e6e6fa"></div>
       <div class="color-btn" style="background:#f0fff0" data-color="#f0fff0"></div>
       <div class="color-btn" style="background:#fffacd" data-color="#fffacd"></div>
     </div>
 
-    <div id="game-canvas-wrapper" class="canvas-box"></div>
+    <div id="game-canvas-wrapper" class="canvas-box room-canvas"></div>
 
-    <div class="room-controls">
-      <button id="add-furniture-btn" class="action-btn">🪑 Add Item</button>
-      <button id="delete-mode-btn" class="action-btn">🗑️ Delete Item</button>
-      
-      <button id="visit-friend-btn" class="action-btn">✈️ Visit Friend</button>
-      <button id="go-home-btn" class="action-btn hidden">🏠 Go Home</button>
+    <div class="controls-grid">
+      <button id="add-furniture-btn" class="action-btn">🪑 Decorate</button>
+      <button id="delete-mode-btn" class="action-btn">🗑️ Delete</button>
+      <button id="visit-friend-btn" class="action-btn secondary">✈️ Visit</button>
+      <button id="go-home-btn" class="action-btn secondary hidden">🏠 Go Home</button>
     </div>
   </div>
 
   <div id="furniture-modal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Pick Furniture</h3>
-      <div class="furniture-grid">
-        <div class="furn-item" data-type="bed"><img src="furniture/bed.png" onerror="this.src=''" alt="Bed"><span>Bed</span></div>
-        <div class="furn-item" data-type="table"><img src="furniture/table.png" onerror="this.src=''" alt="Table"><span>Table</span></div>
-        <div class="furn-item" data-type="plant"><img src="furniture/plant.png" onerror="this.src=''" alt="Plant"><span>Plant</span></div>
-        <div class="furn-item" data-type="sofa"><img src="furniture/sofa.png" onerror="this.src=''" alt="Sofa"><span>Sofa</span></div>
+    <div class="modal-content slide-up">
+      <div class="modal-header">
+        <h3>Pick an Item</h3>
+        <button class="close-btn close-modal" data-target="furniture-modal">✕</button>
       </div>
-      <button class="close-modal" data-target="furniture-modal">Cancel</button>
+      <div class="furniture-grid">
+        <div class="furn-item" data-type="bed"><div class="icon">🛏️</div><span>Bed</span></div>
+        <div class="furn-item" data-type="table"><div class="icon">🪵</div><span>Table</span></div>
+        <div class="furn-item" data-type="plant"><div class="icon">🪴</div><span>Plant</span></div>
+        <div class="furn-item" data-type="sofa"><div class="icon">🛋️</div><span>Sofa</span></div>
+      </div>
     </div>
   </div>
 
   <div id="friends-modal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Visit a Friend</h3>
+    <div class="modal-content slide-up">
+      <div class="modal-header">
+        <h3>Visit Friend</h3>
+        <button class="close-btn close-modal" data-target="friends-modal">✕</button>
+      </div>
       <div id="friends-list-container"></div>
-      <button class="close-modal" data-target="friends-modal">Cancel</button>
     </div>
   </div>
 
