@@ -6,10 +6,10 @@ let allRooms = {};
 let happiness = 5;
 let lastInteractionTime = Date.now(); 
 
-// --- NEW STATE VARIABLES ---
+// ---  STATE VARIABLES ---
 let furnitureList = []; 
 let furnitureImages = {}; 
-let wallColor = '#f0f8ff'; // Default Light Blue
+let wallColor = '#f0f8ff'; 
 let isDeleteMode = false;  // Track if we are deleting items
 
 let drawingSketch, roomSketch;
@@ -55,7 +55,7 @@ function setupSocket() {
     // Hide controls when visiting
     document.getElementById('add-furniture-btn').classList.add('hidden');
     document.getElementById('delete-mode-btn').classList.add('hidden');
-    document.getElementById('emote-bar').classList.add('hidden');
+    document.getElementById('emote-bar').classList.add('hidden'); // Note: This ID changed in HTML to .wall-color-picker, but keeping for safety
   });
   
   socket.on('visitor-arrived', (visitorData) => {
@@ -94,6 +94,10 @@ function setupUI() {
   // ---  Wall Color Buttons ---
   document.querySelectorAll('.color-btn').forEach(btn => {
     btn.onclick = (e) => {
+      // Manage visual selection state
+      document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+      e.target.classList.add('selected');
+
       // Only allow changing color if NOT visiting
       if(document.getElementById('go-home-btn').classList.contains('hidden')) {
         wallColor = e.target.dataset.color;
@@ -110,10 +114,10 @@ function setupUI() {
   delBtn.onclick = () => {
       isDeleteMode = !isDeleteMode; // Toggle mode
       if(isDeleteMode) {
-          delBtn.innerText = "❌ Click Item to Delete";
+          delBtn.innerText = "❌ Click to Delete";
           delBtn.classList.add('delete-active');
       } else {
-          delBtn.innerText = "🗑️ Delete Item";
+          delBtn.innerText = "🗑️ Delete";
           delBtn.classList.remove('delete-active');
       }
   };
@@ -140,14 +144,14 @@ function setupUI() {
     friendPet = null;
     loadGameData(); // Reload my own data
     
-    document.getElementById('room-title').innerText = "🏠 My Room";
+    document.getElementById('room-title').innerText = "🏠 Home";
     document.getElementById('visit-friend-btn').classList.remove('hidden');
     document.getElementById('go-home-btn').classList.add('hidden');
     
     // Show controls again
     document.getElementById('add-furniture-btn').classList.remove('hidden');
     document.getElementById('delete-mode-btn').classList.remove('hidden');
-    document.getElementById('emote-bar').classList.remove('hidden');
+    // document.getElementById('emote-bar').classList.remove('hidden'); // If needed
     
     socket.emit('create-room', { 
         name: myPet.name, 
@@ -163,7 +167,7 @@ function updateFriendsUI() {
   container.innerHTML = '';
   const friends = Object.values(allRooms).filter(r => r.socketId !== socket.id);
 
-  if(friends.length === 0) container.innerHTML = '<p style="padding:10px; color:#999;">No friends online.</p>';
+  if(friends.length === 0) container.innerHTML = '<p style="padding:10px; color:#999; text-align:center;">No friends online.</p>';
 
   friends.forEach(f => {
     const row = document.createElement('div');
@@ -198,7 +202,7 @@ function loadGameData() {
     myPet = data.myPet;
     furnitureList = data.furnitureList;
     happiness = data.happiness;
-    wallColor = data.wallColor || '#f0f8ff'; // Default color
+    wallColor = data.wallColor || '#f0f8ff'; 
     
     if(myPet.image) {
       showScreen('room');
@@ -213,19 +217,21 @@ function loadGameData() {
   }
 }
 
-// --- UPDATED DRAWING CANVAS ---
+// --- DRAWING CANVAS ---
 function initDrawingCanvas() {
   if(drawingSketch) return;
   const s = (p) => {
     let currentTool = 'pen';
     
     p.setup = () => { 
-      let size = Math.min(window.innerWidth - 40, 350);
+      // Size relative to container to prevent overflow
+      let container = document.getElementById('drawing-canvas-wrapper');
+      let size = Math.min(container.offsetWidth, 350); 
       p.createCanvas(size, size); 
       p.clear(); 
       p.textAlign(p.CENTER, p.CENTER);
       
-      let c = document.querySelector('#drawing-canvas-wrapper canvas');
+      let c = container.querySelector('canvas');
       if(c) {
         c.addEventListener('touchstart', (e)=>e.preventDefault(), {passive:false});
         c.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
@@ -239,7 +245,6 @@ function initDrawingCanvas() {
           p.stroke(0); p.strokeWeight(5); p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
         } 
         else if (currentTool === 'spray') {
-          // Brown Spray: 
           p.stroke('#8B4513'); p.strokeWeight(2);
           for(let i=0; i<10; i++) {
             let angle = p.random(p.TWO_PI);
@@ -248,9 +253,7 @@ function initDrawingCanvas() {
           }
         } 
         else if (currentTool === 'spotted') {
-          // Yellow Spotted
           p.noStroke(); p.fill('#FFD700'); 
-          // Only draw every few frames to create gaps/spots
           if(p.frameCount % 5 === 0) {
              p.ellipse(p.mouseX, p.mouseY, 15, 15);
           }
@@ -275,30 +278,47 @@ function initDrawingCanvas() {
   drawingSketch = new p5(s, 'drawing-canvas-wrapper');
 }
 
-// ---  ROOM CANVAS ---
+// ---   ROOM CANVAS  ---
 function initRoomCanvas() {
   if(roomSketch) return;
   const s = (p) => {
     let myPetImg, friendPetImg;
+    
     p.setup = () => {
-      let w = Math.min(window.innerWidth - 30, 500);
-      let h = Math.min(window.innerHeight * 0.6, 400);
+      //  DYNAMIC SIZE:
+      let container = document.getElementById('game-canvas-wrapper');
+      let w = container.offsetWidth;
+      let h = container.offsetHeight;
+      
       p.createCanvas(w, h); 
       p.imageMode(p.CENTER); p.textAlign(p.CENTER);
       
       if(myPet.image) myPetImg = p.loadImage(myPet.image);
       ['bed','table','plant','sofa'].forEach(k => furnitureImages[k] = p.loadImage(`furniture/${k}.png`));
 
-      let c = document.querySelector('#game-canvas-wrapper canvas');
+      let c = container.querySelector('canvas');
       if(c) {
         c.addEventListener('touchstart', (e)=>e.preventDefault(), {passive:false});
         c.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
       }
     };
+
+    // Handle Resize
+    p.windowResized = () => {
+      let container = document.getElementById('game-canvas-wrapper');
+      if(container) p.resizeCanvas(container.offsetWidth, container.offsetHeight);
+    };
+
     p.draw = () => {
-      // USE NEW WALL COLOR
+      
       p.background(wallColor);
-      p.noStroke(); p.fill('#e1d2b8'); p.rect(0, p.height-100, p.width, 100);
+      
+      //  DYNAMIC FLOOR: Always at the bottom
+      let floorHeight = 100;
+      let floorY = p.height - floorHeight;
+      
+      p.noStroke(); p.fill('#e1d2b8'); 
+      p.rect(0, floorY, p.width, floorHeight);
 
       if (Date.now() - lastInteractionTime > 10000 && happiness > 0) {
         changeHappiness(-1);
@@ -313,10 +333,16 @@ function initRoomCanvas() {
         else { p.fill(0); p.text("📦", item.x, item.y); }
       });
 
+      //  Position relative to floor
+      let groundY = floorY + 40; 
+
       if(friendPet) {
         if(!friendPetImg && friendPet.image) friendPetImg = p.loadImage(friendPet.image);
+        friendPet.y = groundY; // Update Y to match screen
         updatePet(p, friendPet, friendPetImg, false);
       }
+      
+      myPet.y = groundY; // Update Y to match screen
       updatePet(p, myPet, myPetImg, true);
       
       if(reactionTimer > 0) { p.textSize(30); p.text('❤️', myPet.x, myPet.y - 70); reactionTimer--; }
