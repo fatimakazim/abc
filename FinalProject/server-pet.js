@@ -1,7 +1,7 @@
 const express = require('express');
 const https = require("https");
 const fs = require("fs");
-const cors = require('cors'); // You likely need to install this: npm install cors
+const cors = require('cors'); 
 
 const app = express();
 const portHTTPS = 4220;
@@ -10,7 +10,7 @@ const portHTTPS = 4220;
 app.use(cors({ origin: "*" })); 
 app.use(express.static('public'));
 
-// 2. Load Keys (Ensure this folder actually exists on the server!)
+// 2. Load Keys
 let options = {};
 try {
     options = {
@@ -26,8 +26,8 @@ const server = https.createServer(options, app);
 const { Server } = require("socket.io");
 
 const io = new Server(server, {
-    // 3. Ensure this path matches the Client EXACTLY
-    path: "/fatima/port-4220/socket.io",
+    
+    path: "/socket.io",
     cors: {
         origin: "*", // Allow all connections
         methods: ["GET", "POST"],
@@ -35,8 +35,8 @@ const io = new Server(server, {
     }
 });
 
-// 4. LOW-LEVEL DEBUGGING (This answers "why no console log")
-// If you see logs here but not "User connected", it means SSL or Socket.IO path failed.
+// LOW-LEVEL DEBUGGING 
+
 server.on('request', (req, res) => {
     // Only log socket requests to avoid spamming
     if (req.url.includes('socket.io')) {
