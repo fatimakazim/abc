@@ -13,7 +13,7 @@ const options = {
 const server = https.createServer(options, app);
 const { Server } = require("socket.io");
 const io = new Server(server, {
-  path: "/fatima/port-4222/socket.io"
+  path: "/fatima/port-4220/socket.io"
 });
 
 let activeRooms = {}; 
